@@ -52,6 +52,7 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 
 	chunkInfoChan := make(chan ChunkInfo)
 	stopChan := make(chan struct{})
+	Output := make(chan DataChunk)
 	wg := new(sync.WaitGroup)
 	//Saving data in Pool
 	wp := WorkerPool{
@@ -68,10 +69,23 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 			ChunkInfo: chunkInfoChan,
 			Stop:      stopChan,
 			Wg:        wg,
+			Output:    Output,
 		}
 		wg.Add(1)
 		go w.StartDownload()
 	}
+
+	//Create Merger
+	merger := Merger{
+		FirstId:           1,
+		LastId:            len(chunkRange),
+		Input:             Output,
+		File:              "test.tmp",
+		Wg:                wg,
+		StopReceivingChan: stopChan,
+	}
+	go merger.Start()
+	wg.Add(1)
 
 	for id, i := range chunkRange {
 		chunkInfoChan <- ChunkInfo{
@@ -80,7 +94,9 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 			ChunkRange: fmt.Sprintf("bytes=%d-%d", i.LowerRange, i.UpperRange),
 		}
 	}
-	// wg.Wait()
+	logSuccess("[MANAGER]: Sent total chunksInfo to download %d", len(chunkRange))
+
+	//wg.Wait()
 	return wp, nil
 }
 
@@ -98,12 +114,13 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 	//ioutil.ReadAll(res.Body)
 	if res.StatusCode != 200 && res.StatusCode != 206 {
 		log.Printf("Status Code (%d): Invalid header received\n", res.StatusCode)
+
 		return cr, HeaderRangesNotSupported
 	}
 	defer res.Body.Close()
 
 	cl := res.Header.Get("content-length")
-	log.Println("Content Length : " + cl)
+	logSuccess("[MANAGER]: Calculated Content Length : " + cl)
 	length, err := strconv.Atoi(cl)
 	if err != nil {
 		return cr, err
