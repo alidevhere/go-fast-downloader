@@ -46,6 +46,7 @@ func (w Worker) StartDownload() {
 			w.Output <- data
 		case <-w.Stop:
 			logSuccess("ID[%d]: Process completed logging out.....\n", w.WorkerId)
+			return
 			// default:
 			// 	log.Printf("ID[%d]Waiting for job\nSleeping for 5 sec\n", w.WorkerId)
 			// 	time.Sleep(5 * time.Second)

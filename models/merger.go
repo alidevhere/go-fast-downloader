@@ -7,6 +7,7 @@ import (
 )
 
 type Merger struct {
+	TotalWorkers      int
 	Wg                *sync.WaitGroup
 	FirstId           int
 	LastId            int
@@ -63,7 +64,10 @@ func (m *Merger) Start() {
 			if m.chunksLeft == 0 {
 				logInfo("[MERGER]: Received all chunks")
 				//Send signle to all worker to stop
-				m.StopReceivingChan <- struct{}{}
+				for i := 0; i < m.TotalWorkers; i++ {
+
+					m.StopReceivingChan <- struct{}{}
+				}
 
 				for m.currentId <= m.LastId {
 					if data, ok := m.chunkRepo[m.currentId]; ok {

@@ -77,6 +77,7 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 
 	//Create Merger
 	merger := Merger{
+		TotalWorkers:      c.NoOfWorkers,
 		FirstId:           1,
 		LastId:            len(chunkRange),
 		Input:             Output,
