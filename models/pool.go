@@ -10,17 +10,7 @@ import (
 	"github.com/alidevhere/go-fast-downloader/util"
 )
 
-type WorkerPool struct {
-	Url            string
-	InputChan      chan ChunkInfo
-	StopChan       chan struct{}
-	Wg             *sync.WaitGroup
-	NoOfWorkers    int
-	ChunkSlice     int
-	ChunksRegistry map[string][]byte
-}
-
-type WorkerPoolOptions struct {
+type DownloadOptions struct {
 	//chunk size in bytes
 	ChunkSize int
 	//No of go routines in pool
@@ -31,19 +21,21 @@ type WorkerPoolOptions struct {
 
 //Start Pool make live all routines
 
-func Download(c WorkerPoolOptions) (WorkerPool, error) {
+func Download(c DownloadOptions) {
 
 	chunkRange, err := calculateChunkSlice(c.URI, c.ChunkSize)
+	logInfo("[MANAGER]: Calculated Chunk Range : " + fmt.Sprintf("%v", chunkRange))
 	if err == HeaderRangesNotSupported {
 		//TODO:
 		//Download file with single file and without pause functionality
 		log.Printf("Error: %v", err.Error())
-		return WorkerPool{}, err
+		panic(err)
+
 	}
 
 	if err != nil {
 		log.Printf("Error: %v", err.Error())
-		return WorkerPool{}, err
+		panic(err)
 	}
 
 	//Chunk Ranges is supported so:
@@ -55,13 +47,13 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 	Output := make(chan DataChunk)
 	wg := new(sync.WaitGroup)
 	//Saving data in Pool
-	wp := WorkerPool{
-		NoOfWorkers:    c.NoOfWorkers,
-		InputChan:      chunkInfoChan,
-		StopChan:       stopChan,
-		Wg:             wg,
-		ChunksRegistry: make(map[string][]byte),
-	}
+	// wp := WorkerPool{
+	// 	NoOfWorkers:    c.NoOfWorkers,
+	// 	InputChan:      chunkInfoChan,
+	// 	StopChan:       stopChan,
+	// 	Wg:             wg,
+	// 	ChunksRegistry: make(map[string][]byte),
+	// }
 
 	for i := 1; i <= c.NoOfWorkers; i++ {
 		w := Worker{
@@ -97,8 +89,8 @@ func Download(c WorkerPoolOptions) (WorkerPool, error) {
 	}
 	logSuccess("[MANAGER]: Sent total chunksInfo to download %d", len(chunkRange))
 
-	//wg.Wait()
-	return wp, nil
+	wg.Wait()
+
 }
 
 func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
