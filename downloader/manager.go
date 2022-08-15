@@ -40,9 +40,9 @@ func Download(c DownloadOptions) {
 	//1- Make pool
 	//2- assign chunks
 
-	chunkInfoChan := make(chan ChunkInfo)
+	chunkInfoChan := make(chan ChunkInfo, 100)
 	stopChan := make(chan struct{})
-	Output := make(chan DataChunk)
+	Output := make(chan DataChunk, 100)
 	wg := new(sync.WaitGroup)
 	//Saving data in Pool
 	// wp := WorkerPool{
@@ -78,14 +78,14 @@ func Download(c DownloadOptions) {
 	go merger.Start()
 	wg.Add(1)
 
-	for id, i := range chunkRange {
+	for _, i := range chunkRange {
 		chunkInfoChan <- ChunkInfo{
-			ChunkId:    id + 1,
+			ChunkId:    i.ChunkId,
 			Uri:        c.URI,
 			ChunkRange: fmt.Sprintf("bytes=%d-%d", i.LowerRange, i.UpperRange),
 		}
 	}
-	logSuccess("[MANAGER]: Sent total chunksInfo to download %d", len(chunkRange))
+	logSuccess("[MANAGER]: Sent total chunksInfo to download %d first Chunk ID[%d] last chunk ID[%d]", len(chunkRange), chunkRange[0].ChunkId, chunkRange[len(chunkRange)-1].ChunkId)
 
 	wg.Wait()
 
@@ -123,7 +123,7 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 	}
 
 	//Ranges supported
-
+	chunk_id := 1
 	chunkLength := length / chunkSize
 	for i := 0; i < length; i = i + chunkLength + 1 {
 		ul := i + chunkLength
@@ -132,10 +132,11 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 		}
 
 		cr = append(cr, ChunkRange{
+			ChunkId:    chunk_id,
 			LowerRange: i,
 			UpperRange: ul,
 		})
-
+		chunk_id++
 	}
 	return cr, nil
 }

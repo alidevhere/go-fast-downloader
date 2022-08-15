@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"sync"
 )
@@ -31,14 +30,15 @@ func (w Worker) StartDownload() {
 		case info := <-w.ChunkInfo:
 
 			data, err := w.DownloadChunk(info)
-			logSuccess("WORKER[%d]: Downloaded Chunk id[%d] Chunk Range[%s]\n", w.WorkerId, info.ChunkId, info.ChunkRange)
 			if err != nil {
-				log.Printf("ID[%d]:Chunk [%s] ----> FAILED \n", w.WorkerId, info.ChunkRange)
-				log.Printf("ID[%d]:Retrying Chunk [%s] \n", w.WorkerId, info.ChunkRange)
+				// log.Printf("ID[%d]:Chunk [%s] ----> FAILED \n", w.WorkerId, info.ChunkRange)
+				logErr("ID[%d]:FAILED : %s \nRetrying Chunk ID [%d] [%s] \n", w.WorkerId, err.Error(), info.ChunkId, info.ChunkRange)
 				//TODO:
 				//Divide into smaller chunk if failed
 				w.ChunkInfo <- info
+				continue
 			}
+			logSuccess("WORKER[%d]: Downloaded Chunk id[%d] Chunk Range[%s]\n", w.WorkerId, info.ChunkId, info.ChunkRange)
 
 			logInfo("WORKER[%d]: sending chunk %d to output channel \n", w.WorkerId, data.ChunkId)
 			w.Output <- data

@@ -42,14 +42,16 @@ func (m *Merger) Start() {
 		//3. Neither of above, being downloaded
 
 		case chunk := <-m.Input:
-			logInfo("[MERGER]: Received chunk %d", chunk.ChunkId)
-			m.chunksLeft--
+			logInfo("[MERGER]:Current Required Chunk ID[%d] Received chunk %d Chunks Left:%d", m.currentId, chunk.ChunkId, m.chunksLeft)
+			// m.chunksLeft--
 			//merge into file
 			if chunk.ChunkId == m.currentId {
 				f.Write(chunk.Data)
 				m.currentId++
+				m.chunksLeft--
 			} else {
 				m.chunkRepo[chunk.ChunkId] = chunk.Data
+				m.chunksLeft--
 			}
 
 			if data, ok := m.chunkRepo[m.currentId]; ok {
@@ -61,7 +63,15 @@ func (m *Merger) Start() {
 			}
 			//stop when last chunk is received and merge all chunks
 		default:
-			if m.chunksLeft == 0 {
+
+			if data, ok := m.chunkRepo[m.currentId]; ok {
+				logInfo("[MERGER]: Merged chunk %d", m.currentId)
+				f.Write(data)
+				//delete data from chunkRepo
+				delete(m.chunkRepo, m.currentId)
+				m.currentId++
+			}
+			if m.chunksLeft <= 0 {
 				logInfo("[MERGER]: Received all chunks")
 				//Send signle to all worker to stop
 				for i := 0; i < m.TotalWorkers; i++ {

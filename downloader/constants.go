@@ -10,5 +10,5 @@ var (
 )
 
 const (
-	TimeOutDuration = 10 * time.Second
+	TimeOutDuration = 20 * time.Second
 )

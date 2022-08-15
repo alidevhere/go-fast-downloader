@@ -7,6 +7,7 @@ type ChunkInfo struct {
 }
 
 type ChunkRange struct {
+	ChunkId    int
 	LowerRange int
 	UpperRange int
 }
