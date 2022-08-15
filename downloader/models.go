@@ -10,3 +10,9 @@ type ChunkRange struct {
 	LowerRange int
 	UpperRange int
 }
+
+type DataChunk struct {
+	ChunkId      int
+	Data         []byte
+	DownloadTime int //ms
+}

@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-
-	"github.com/alidevhere/go-fast-downloader/util"
 )
 
 // a single goroutine in pool
@@ -27,7 +25,7 @@ type Worker struct {
 func (w Worker) StartDownload() {
 	defer w.Wg.Done()
 	//Use same client for one go routine during its life cycle
-	w.client = http.Client{Timeout: util.TimeOutDuration}
+	w.client = http.Client{Timeout: TimeOutDuration}
 	for {
 		select {
 		case info := <-w.ChunkInfo:

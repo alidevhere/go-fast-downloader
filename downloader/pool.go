@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-
-	"github.com/alidevhere/go-fast-downloader/util"
 )
 
 type DownloadOptions struct {
@@ -101,7 +99,7 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 	}
 
 	client := http.Client{
-		Timeout: util.TimeOutDuration,
+		Timeout: TimeOutDuration,
 	}
 	res, err := client.Do(r)
 	//ioutil.ReadAll(res.Body)
