@@ -1,4 +1,4 @@
-package models
+package downloader
 
 import (
 	"io/ioutil"

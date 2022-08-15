@@ -1,4 +1,4 @@
-package models
+package downloader
 
 // type Config struct {
 // 	//chunk size in bytes

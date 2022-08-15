@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/alidevhere/go-fast-downloader/models"
+	"github.com/alidevhere/go-fast-downloader/downloader"
 )
 
 func main() {
@@ -10,7 +10,7 @@ func main() {
 	// cs := 500
 	// util.CalculateChunkSlice(ur, cs)
 
-	models.Download(models.DownloadOptions{
+	downloader.Download(downloader.DownloadOptions{
 		NoOfWorkers: 10,
 		ChunkSize:   50,
 		URI:         `https://dl111.download-p48.online/?file=M3R4SUNiN3JsOHJ6WWQ2a3NQS1Y5ZGlxVlZIOCtyZ1BtZGcyemxzVUFLZEo3YUE2MytXdExzaExaWk1BaHJtakZkVlJ2aFBkZU43QUdnNkl1Tk50Q1YyVTVNUThyWFRwOHBvbFVZSlFXaCt6c082aW1Ibzl3aVh3YmN5R0pMbEJlblozcWhJMzdIZkhtT0dhNmhMbzlYdWtxMGk4ZkNVZXVtWk9iOVBKL29wY3dHdk9LcVhDZ0pjVjZIUzU1OThiL09TSXVSZmQwcHMwNFBaMllSVWdKNEFUaXAzbG1mZkpxaG9wcTk4WndsMnR1K2V5RDVNd1FmVElMMmNsYW5OWnVMYXBUeElFeW5oTXJUdnZvZngzcUhNZkxLUjN1VEk9`,

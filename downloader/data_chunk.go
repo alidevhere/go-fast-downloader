@@ -1,4 +1,4 @@
-package models
+package downloader
 
 type DataChunk struct {
 	ChunkId      int
