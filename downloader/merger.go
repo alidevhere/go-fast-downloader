@@ -80,7 +80,7 @@ func (m *Merger) Start() {
 				logSuccess("[MERGER]: Download Completed.... ")
 				return
 			}
-			log.Printf("[MERGER]: Waiting for left chunks %d", m.chunksLeft)
+			//log.Printf("[MERGER]: Waiting for left chunks %d", m.chunksLeft)
 
 		}
 	}
