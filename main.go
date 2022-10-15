@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/alidevhere/go-fast-downloader/downloader"
 )
 
@@ -9,12 +12,14 @@ func main() {
 	// ur := ``
 	// cs := 500
 	// util.CalculateChunkSlice(ur, cs)
+	start := time.Now()
 
 	downloader.Download(downloader.DownloadOptions{
-		NoOfWorkers: 20,
-		ChunkSize:   50,
-		URI:         `https://dl31.download-p46.online/?file=M3R4SUNiN3JsOHJ6WWQ2a3NQS1Y5ZGlxVlZIOCtyZ1BtZGcyemxzVUFLZEo3YUE2MytXdExzaExaWk1BaHJtakZkVlJ2aFBkZU43QUdnNkl1Tk50Q1YyVTVNUThyWFRwOHBvbFVZSlFXaCt6c082aW1Ibzl3aVh3YmN5R0pMbEJlblozcWhJMzdERENtS1hrOXhqbzV6dXJya0dHVXpRTHBqTldlS2YyNkpCZHdYekphcksyOVowVitXUE54TTRNaU5hSm9Remc2S01Yc29SZlhYdGlJc1FKNmRUNHo2U0tva0lXM2FrM25FaTh1ZXUwQTRvOEVhRERLR0VtYm5kZnVMeTZDMTBOeGo4YnBUN3RwZjU4dnpkUFlyWW83R0RscVE9PQ%3D%3D`,
+		NoOfWorkers: 30,
+		ChunkSize:   500,
+		URI:         `https://dl183.dlmate13.xyz/?file=M3R4SUNiN3JsOHJ6WWQ2a3NQS1Y5ZGlxVlZIOCtyZ1BtZGcyemxzVUFLZEo3YUE2MytXdExzaExaWk1BaHJtakZkVlJ2aFBkZU43QUdnNkl1Tk50Q1YyVTVNUThyWFRwOHBvbFVZSlFXaCt6c082aW1Ibzl3aVh3YmN5R0pMbEJlblozcWhJMzdEREVucUhrOXhqbzV6dXJya0dHVXpRTHBqTldlS2YyNkpCZHdYekphcksyOVowVitXUE54SjRNaU5hRTVnejMxN2R3dTlONEZRay9lSkZRMVpQS3lQSEFvSGdVbFpFZDEwQ2xyZDJ5Q2FFbUhhR1ZmQWg5T3lzSDF1WHVYUlVod1RBTjZtMnF5YWtrK21VQlRxRjU0VjIvOGZQbldUMmRiZGJKWHBDVFBlbXhyNWV0M2UxMHNsZnF0OHJOeExCRHFSN3dHcGpQQ053WTVRa2twS3plMWVkd3gwNnAweDBmbHVrRXdSYXRJUnBzR2NBZWR5WlpZZDhlSFN0RitwdTJ1UE5wcjg4S2ZWcSs1NzVnSnc9PQ%3D%3D`,
 	})
+	fmt.Printf("Completed Download in %s", time.Since(start).String())
 
 }
 
