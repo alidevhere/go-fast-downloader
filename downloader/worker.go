@@ -28,28 +28,20 @@ func (w Worker) StartDownload() {
 	for {
 		select {
 		case info := <-w.ChunkInfo:
-
 			data, err := w.DownloadChunk(info)
 			if err != nil {
-				// log.Printf("ID[%d]:Chunk [%s] ----> FAILED \n", w.WorkerId, info.ChunkRange)
 				logErr("ID[%d]:FAILED : %s \nRetrying Chunk ID [%d] [%s] \n", w.WorkerId, err.Error(), info.ChunkId, info.ChunkRange)
-				//TODO:
-				//Divide into smaller chunk if failed
 				w.ChunkInfo <- info
 				continue
 			}
-			logSuccess("WORKER[%d]: Downloaded Chunk id[%d] Chunk Range[%s]\n", w.WorkerId, info.ChunkId, info.ChunkRange)
 
+			logSuccess("WORKER[%d]: Downloaded Chunk id[%d] Chunk Range[%s]\n", w.WorkerId, info.ChunkId, info.ChunkRange)
 			logInfo("WORKER[%d]: sending chunk %d to output channel \n", w.WorkerId, data.ChunkId)
 			w.Output <- data
+
 		case <-w.Stop:
 			logSuccess("ID[%d]: Process completed logging out.....\n", w.WorkerId)
 			return
-			// default:
-			// 	log.Printf("ID[%d]Waiting for job\nSleeping for 5 sec\n", w.WorkerId)
-			// 	time.Sleep(5 * time.Second)
-			// default:
-			// 	log.Printf("Worker [%d]: Waiting \n", w.WorkerId)
 		}
 	}
 }

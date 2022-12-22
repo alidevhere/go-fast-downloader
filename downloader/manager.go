@@ -1,16 +1,26 @@
 package downloader
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
+)
+
+var (
+	HeaderRangesNotSupported = errors.New("Header ranges not supported")
+)
+
+const (
+	TimeOutDuration = 20 * time.Second
 )
 
 type DownloadOptions struct {
-	//chunk size in bytes
-	ChunkSize int
+	//Download file in this many chunks
+	NoOfChunks int
 	//No of go routines in pool
 	NoOfWorkers int
 	//Url
@@ -21,11 +31,9 @@ type DownloadOptions struct {
 
 func Download(c DownloadOptions) {
 
-	chunkRange, err := calculateChunkSlice(c.URI, c.ChunkSize)
+	chunkRange, err := calculateChunkSlice(c.URI, c.NoOfChunks)
 	logInfo("[MANAGER]: Calculated Chunk Range : " + fmt.Sprintf("%v", chunkRange))
 	if err == HeaderRangesNotSupported {
-		//TODO:
-		//Download file with single file and without pause functionality
 		log.Printf("Error: %v", err.Error())
 		panic(err)
 
@@ -37,21 +45,13 @@ func Download(c DownloadOptions) {
 	}
 
 	//Chunk Ranges is supported so:
-	//1- Make pool
+	//1- Make workers pool
 	//2- assign chunks
 
 	chunkInfoChan := make(chan ChunkInfo, 100)
 	stopChan := make(chan struct{})
 	Output := make(chan DataChunk, 100)
 	wg := new(sync.WaitGroup)
-	//Saving data in Pool
-	// wp := WorkerPool{
-	// 	NoOfWorkers:    c.NoOfWorkers,
-	// 	InputChan:      chunkInfoChan,
-	// 	StopChan:       stopChan,
-	// 	Wg:             wg,
-	// 	ChunksRegistry: make(map[string][]byte),
-	// }
 
 	for i := 1; i <= c.NoOfWorkers; i++ {
 		w := Worker{
@@ -101,11 +101,14 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 	client := http.Client{
 		Timeout: TimeOutDuration,
 	}
+
 	res, err := client.Do(r)
-	//ioutil.ReadAll(res.Body)
+	if err != nil {
+		return cr, err
+	}
+
 	if res.StatusCode != 200 && res.StatusCode != 206 {
 		log.Printf("Status Code (%d): Invalid header received\n", res.StatusCode)
-
 		return cr, HeaderRangesNotSupported
 	}
 	defer res.Body.Close()
@@ -117,7 +120,7 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 		return cr, err
 	}
 
-	//it will be 'none' is ranges not supported
+	//it will be 'none' if ranges not supported
 	if res.Header.Get("Accept-Ranges") != "bytes" {
 		return cr, HeaderRangesNotSupported
 	}
@@ -140,9 +143,3 @@ func calculateChunkSlice(uri string, chunkSize int) ([]ChunkRange, error) {
 	}
 	return cr, nil
 }
-
-// This function will check if on channel if passed chunk is nect required chunk then
-// Save in file otherwise save in map chunkRegistry
-// func chunksMerger(c WorkerPoolOptions) (WorkerPool, error) {
-
-// }

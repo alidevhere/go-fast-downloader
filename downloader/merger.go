@@ -25,7 +25,6 @@ func (m *Merger) Start() {
 	//For saving data
 	m.chunkRepo = make(map[int][]byte)
 	m.currentId = m.FirstId
-	//m.receivedChunks = m.LastId - m.FirstId + 1
 	m.chunksLeft = m.LastId
 	f, err := os.OpenFile(m.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -94,10 +93,5 @@ func (m *Merger) Start() {
 
 		}
 	}
-
-}
-
-// Append given chunk to file
-func (m *Merger) sortAndMerge() {
 
 }
