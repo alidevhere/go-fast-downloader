@@ -7,14 +7,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/user"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 )
 
+// Options for creating new the new instance downloader.
 type Options struct {
 	// The number of bytes to download in each request.
-	// If not set, the default is 1KB or 1024 Bytes.
+	// If not set, the default is 5MB or 1024*1024*5 Bytes.
 	ChunkSizeInBytes int
 	// The number of concurrent requests to make.
 	// If not set, the default is 5.
@@ -24,8 +27,14 @@ type Options struct {
 	Retries int
 	// Url to download from.
 	Url string
-	// Output file path.
-	outputFilePath string
+	// Request timeout in seconds.
+	// If not set, the default is 3 minutes.
+	RequestTimeout time.Duration
+	// Output file name.
+	OutputFileName string
+	// Output file directory.
+	// default output directory is the current user's home/downloads directory.
+	OutputFileDirectory string
 }
 
 type ConcurrentDownloader interface {
@@ -33,16 +42,15 @@ type ConcurrentDownloader interface {
 }
 
 type downloader struct {
-	outputFilePath string
-	firstChunkID   int
-	lastChunkID    int
-	client         *http.Client
-	options        Options
-	chunkRanges    []chunkRange
-	wg             *sync.WaitGroup
-	inputChan      chan chunkRange
-	outputChan     chan dataChunk
-	stopChan       chan struct{}
+	firstChunkID int
+	lastChunkID  int
+	client       *http.Client
+	options      Options
+	chunkRanges  []chunkRange
+	wg           *sync.WaitGroup
+	inputChan    chan chunkRange
+	outputChan   chan dataChunk
+	stopChan     chan struct{}
 }
 
 type chunkRange struct {
@@ -97,14 +105,12 @@ func newOffSet(f *os.File) int64 {
 
 func (d *downloader) merger() error {
 	defer d.wg.Done()
-	tmpFileName := "temp.mp4"
-	f, err := os.OpenFile(tmpFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+
+	f, err := os.CreateTemp(d.options.OutputFileDirectory, "temp.tmp")
 	if err != nil {
 		log.Println(err)
 	}
-	defer f.Close()
-
-	// defer os.Remove(f.Name())
+	defer os.Remove(f.Name())
 
 	m := make(map[int]info)
 	downloadedChunksMapping := make(map[int]bool)
@@ -126,15 +132,14 @@ func (d *downloader) merger() error {
 			}
 
 			if len(downloadedChunksMapping) == len(d.chunkRanges) {
-				// of, _ := os.Create(d.outputFilePath)
-				of, e := os.OpenFile(d.outputFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+				of, e := os.OpenFile(filepath.Join(d.options.OutputFileDirectory, d.options.OutputFileName), os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 				if e != nil {
 					println(e.Error())
 				}
 
 				defer of.Close()
 				f.Close()
-				sortOutputFiles(m, d.firstChunkID, d.lastChunkID, tmpFileName, of)
+				sortOutputFiles(m, d.firstChunkID, d.lastChunkID, f.Name(), of)
 				for i := 0; i < d.options.Concurrency; i++ {
 					d.stopChan <- struct{}{}
 				}
@@ -200,8 +205,19 @@ func (d *downloader) downloadChunk(info chunkRange) (dataChunk, error) {
 }
 
 func NewConcurrentDownloader(options Options) (ConcurrentDownloader, error) {
+	if err := validateOpts(&options); err != nil {
+		return nil, err
+	}
+
+	return &downloader{options: options, client: &http.Client{
+		Timeout: options.RequestTimeout,
+	}}, nil
+
+}
+
+func validateOpts(options *Options) error {
 	if options.ChunkSizeInBytes == 0 {
-		options.ChunkSizeInBytes = 1024
+		options.ChunkSizeInBytes = 1024 * 1024 * 1
 	}
 
 	if options.Concurrency == 0 {
@@ -213,17 +229,27 @@ func NewConcurrentDownloader(options Options) (ConcurrentDownloader, error) {
 	}
 
 	if options.Url == "" {
-		return nil, errors.New("Url is required")
+		return errors.New("Url is required")
 	}
 
-	if options.outputFilePath == "" {
-		return nil, errors.New("outputFilePath is required")
+	if options.OutputFileDirectory == "" {
+		usr, err := user.Current()
+		if err != nil {
+			return err
+		}
+		options.OutputFileDirectory = filepath.Join(usr.HomeDir, "Downloads")
 	}
 
-	return &downloader{options: options, client: &http.Client{
-				// Timeout: time.Second * 10,
-	}, outputFilePath: options.outputFilePath}, nil
+	if options.OutputFileName == "" {
+		return errors.New("Output file name is required")
+	}
 
+	if options.RequestTimeout == 0 {
+		println("Setting request timeout to 3 minutes")
+		options.RequestTimeout = 3 * time.Minute
+	}
+
+	return nil
 }
 
 func (d *downloader) StartDownload() error {
@@ -326,24 +352,25 @@ func (d *downloader) calculateChunkRanges() error {
 }
 
 func main() {
-
 	url := "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4"
 	options := Options{
-		Url:              url,
-		ChunkSizeInBytes: 1024 * 1024 * 1,
-		Concurrency:      5,
-		Retries:          3,
-		outputFilePath:   "output.mp4",
+		Url:                 url,
+		ChunkSizeInBytes:    1024 * 1024 * 5,
+		Concurrency:         5,
+		Retries:             3,
+		OutputFileDirectory: ".",
+		OutputFileName:      "output.mp4",
 	}
 
 	d, err := NewConcurrentDownloader(options)
 	if err != nil {
 		println(err.Error())
 	}
-
+	startTime := time.Now()
 	err = d.StartDownload()
 	if err != nil {
 		println(err.Error())
 	}
 
+	fmt.Println("Total time taken: ", time.Since(startTime).Milliseconds(), "ms")
 }
