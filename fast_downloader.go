@@ -1,4 +1,4 @@
-package main
+package fastdownloader
 
 import (
 	"errors"
@@ -38,19 +38,28 @@ type Options struct {
 }
 
 type ConcurrentDownloader interface {
+	// Start the download process.
 	StartDownload() error
+	// Get the output file path.
+	OutputFilePath() string
+	// Get the total download time.
+	DownloadTime() time.Duration
+
+	// IsDownloadComplete() bool
 }
 
 type downloader struct {
-	firstChunkID int
-	lastChunkID  int
-	client       *http.Client
-	options      Options
-	chunkRanges  []chunkRange
-	wg           *sync.WaitGroup
-	inputChan    chan chunkRange
-	outputChan   chan dataChunk
-	stopChan     chan struct{}
+	firstChunkID   int
+	lastChunkID    int
+	client         *http.Client
+	options        Options
+	chunkRanges    []chunkRange
+	wg             *sync.WaitGroup
+	inputChan      chan chunkRange
+	outputChan     chan dataChunk
+	stopChan       chan struct{}
+	outputFilePath string
+	downloadTime   time.Duration
 }
 
 type chunkRange struct {
@@ -140,6 +149,7 @@ func (d *downloader) merger() error {
 				defer of.Close()
 				f.Close()
 				sortOutputFiles(m, d.firstChunkID, d.lastChunkID, f.Name(), of)
+				d.outputFilePath = of.Name()
 				for i := 0; i < d.options.Concurrency; i++ {
 					d.stopChan <- struct{}{}
 				}
@@ -252,8 +262,17 @@ func validateOpts(options *Options) error {
 	return nil
 }
 
+func (d *downloader) OutputFilePath() string {
+	return d.outputFilePath
+}
+
+func (d *downloader) DownloadTime() time.Duration {
+	return d.downloadTime
+}
+
 func (d *downloader) StartDownload() error {
 
+	startTime := time.Now()
 	err := d.calculateChunkRanges()
 	if err != nil {
 		return err
@@ -275,6 +294,11 @@ func (d *downloader) StartDownload() error {
 	}
 
 	d.wg.Wait()
+	close(d.inputChan)
+	close(d.outputChan)
+	close(d.stopChan)
+
+	d.downloadTime = time.Since(startTime)
 
 	return nil
 
@@ -349,28 +373,4 @@ func (d *downloader) calculateChunkRanges() error {
 	d.lastChunkID = chunk_id - 1
 
 	return nil
-}
-
-func main() {
-	url := "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4"
-	options := Options{
-		Url:                 url,
-		ChunkSizeInBytes:    1024 * 1024 * 5,
-		Concurrency:         5,
-		Retries:             3,
-		OutputFileDirectory: ".",
-		OutputFileName:      "output.mp4",
-	}
-
-	d, err := NewConcurrentDownloader(options)
-	if err != nil {
-		println(err.Error())
-	}
-	startTime := time.Now()
-	err = d.StartDownload()
-	if err != nil {
-		println(err.Error())
-	}
-
-	fmt.Println("Total time taken: ", time.Since(startTime).Milliseconds(), "ms")
 }
