@@ -2,6 +2,7 @@ package fastdownloader
 
 import (
 	"net/http"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -154,45 +155,20 @@ func Test_downloader_DownloadTime(t *testing.T) {
 	}
 }
 
-func Test_downloader_calculateChunkRanges(t *testing.T) {
-	type fields struct {
-		firstChunkID   int
-		lastChunkID    int
-		client         *http.Client
-		options        Options
-		chunkRanges    []chunkRange
-		wg             *sync.WaitGroup
-		inputChan      chan chunkRange
-		outputChan     chan dataChunk
-		stopChan       chan struct{}
-		outputFilePath string
-		downloadTime   time.Duration
+func Test_completeDownload(t *testing.T) {
+	downloader, err := NewConcurrentDownloader(Options{
+		Url:                 "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4",
+		OutputFileName:      "complete_download_test.mp4",
+		OutputFileDirectory: "./",
+	})
+
+	if err != nil {
+		t.Error(err)
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+
+	err = downloader.StartDownload()
+	if err != nil {
+		t.Error(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := &downloader{
-				firstChunkID:   tt.fields.firstChunkID,
-				lastChunkID:    tt.fields.lastChunkID,
-				client:         tt.fields.client,
-				options:        tt.fields.options,
-				chunkRanges:    tt.fields.chunkRanges,
-				wg:             tt.fields.wg,
-				inputChan:      tt.fields.inputChan,
-				outputChan:     tt.fields.outputChan,
-				stopChan:       tt.fields.stopChan,
-				outputFilePath: tt.fields.outputFilePath,
-				downloadTime:   tt.fields.downloadTime,
-			}
-			if err := d.calculateChunkRanges(); (err != nil) != tt.wantErr {
-				t.Errorf("downloader.calculateChunkRanges() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	os.Remove("complete_download_test.mp4")
 }
