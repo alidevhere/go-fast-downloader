@@ -2,6 +2,7 @@ package fastdownloader
 
 import (
 	"net/http"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -154,20 +155,20 @@ func Test_downloader_DownloadTime(t *testing.T) {
 	}
 }
 
-// func Test_completeDownload(t *testing.T) {
-// 	downloader, err := NewConcurrentDownloader(Options{
-// 		Url:                 "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4",
-// 		OutputFileName:      "complete_download_test.mp4",
-// 		OutputFileDirectory: "./",
-// 	})
+func Test_completeDownload(t *testing.T) {
+	downloader, err := NewConcurrentDownloader(Options{
+		Url:                 "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4",
+		OutputFileName:      "complete_download_test.mp4",
+		OutputFileDirectory: "./",
+	})
 
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	err = downloader.StartDownload()
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	os.Remove("complete_download_test.mp4")
-// }
+	err = downloader.StartDownload()
+	if err != nil {
+		t.Error(err)
+	}
+	os.Remove("complete_download_test.mp4")
+}
