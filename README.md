@@ -3,11 +3,20 @@
    This is concurrent downloader is for educational purposes. Please read Medium article to learn concurrency in go by implementing concurrent downloader.
    
 
+# Add package
+```
+go get github.com/alidevhere/go-fast-downloader
+
+```
+
 
 ## Example:
 Check out examples directory or this example below:
 
 ```
+
+import "github.com/alidevhere/go-fast-downloader"
+
 
 func main() {
 	url := "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4"
