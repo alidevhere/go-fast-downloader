@@ -1,9 +1,10 @@
 
 # Go Fast Downloader
-   This is concurrent downloader is for educational purposes. Please read Medium article to learn concurrency in go by implementing concurrent downloader.
+### NOTE:
+   This is concurrent downloader is for educational purposes, not to be used in production.
    
 
-# Add package
+## Add package
 ```
 go get github.com/alidevhere/go-fast-downloader
 
@@ -14,6 +15,7 @@ go get github.com/alidevhere/go-fast-downloader
 Check out examples directory or this example below:
 
 ```
+package main
 
 import "github.com/alidevhere/go-fast-downloader"
 
