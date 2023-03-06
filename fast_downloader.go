@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -243,11 +242,12 @@ func validateOpts(options *Options) error {
 	}
 
 	if options.OutputFileDirectory == "" {
-		usr, err := user.Current()
-		if err != nil {
-			return err
-		}
-		options.OutputFileDirectory = filepath.Join(usr.HomeDir, "Downloads")
+		return errors.New("Output file directory is required")
+		// usr, err := user.Current()
+		// if err != nil {
+		// 	return err
+		// }
+		// options.OutputFileDirectory = filepath.Join(usr.HomeDir, "Downloads")
 	}
 
 	if options.OutputFileName == "" {
